@@ -88,21 +88,21 @@ free_stop_utc=`date +%s -d "$today $free_stop"`
 #-BEGIN-FUNCTIONS-------------------------------------------------------
 #
 # Log the actions
-function log {
+log() {
   if [ $verbose -eq 1 ];
   then
     echo $1
   fi
   log_to_file "$1" 
 }
-function log_to_file {
+ log_to_file() {
   echo `date +"%D %H:%M:%S"` $1 >> $log_file
 }
 #
 #
 # Check if the user is already connected to the net
 #
-function is_connected {
+is_connected() {
   #if true we should get the content of the file as return value
   curl --connect-timeout 30 --silent -A "$user_agent" $pathtotestfile | grep google.co.in > /dev/null
   test=`echo $?`
@@ -118,7 +118,7 @@ function is_connected {
 # Get the connection URL. Asianet cycles this URL. Don't know whether it matters
 # So getting it from the html page itself
 #
-function get_asianet_conn_url {
+get_asianet_conn_url() {
   # If not connected then try any URL and get the redirection URL
   if ! is_connected;
   then
@@ -141,7 +141,7 @@ function get_asianet_conn_url {
 #
 # Connect to asianet by posting the username and password
 #
-function connect {
+connect() {
   # Get URL to post data to
   asianet_conn_url=$(get_asianet_conn_url)
   log "Connecting to $asianet_conn_url"
@@ -152,7 +152,7 @@ function connect {
 #
 # Connect to asianet by posting the username and logout command
 #
-function disconnect {
+disconnect() {
   # Get URL to post data to
   asianet_conn_url=$(get_asianet_conn_url)
   log "Disconnecting from $asianet_conn_url"
@@ -164,7 +164,7 @@ function disconnect {
 #
 # Keep the connection alive by posting the keep alive command
 #
-function keep_alive {
+keep_alive() {
   # Get URL to post data to
   asianet_conn_url=$(get_asianet_conn_url)
   log "Pinging $asianet_conn_url"
@@ -175,8 +175,7 @@ function keep_alive {
 #
 # Recalculate the global time variables
 #
-function recalculate_time_vars
-{
+recalculate_time_vars() {
   # We have to recalculate variables every time
   today=`date +%x`
   now_utc=`date +%s`
@@ -213,7 +212,7 @@ function recalculate_time_vars
 #
 # Get the number of seconds to sleep before free connection starts
 #
-function time_to_free_start {
+time_to_free_start() {
   recalculate_time_vars
   # If it is between the free download slot just wait the default timeout
   if [ $now_utc -lt $free_stop_utc -a $now_utc -ge $free_start_utc ];
@@ -231,8 +230,7 @@ function time_to_free_start {
 #
 # Check if we are within the free download time.
 #
-function is_still_free_download_time
-{
+is_still_free_download_time() {
   recalculate_time_vars
   # If it is between the free download slot just wait the default timeout
   if [ $now_utc -lt $free_stop_utc -a $now_utc -gt $free_start_utc ];
