@@ -91,7 +91,7 @@ log() {
 #
 is_connected() {
   #if true we should get the content of the file as return value
-  curl --connect-timeout 30 --silent -A "$user_agent" $pathtotestfile | grep google.co.in > /dev/null
+  curl --connect-timeout 30 --silent --insecure -A "$user_agent" $pathtotestfile | grep google.co.in > /dev/null
   test=`echo $?`
   if [ $test = 0 ];
   then
@@ -110,7 +110,7 @@ get_asianet_conn_url() {
   if ! is_connected;
   then
     # The curl strategy will work only if user is not already connected to the net
-    asianet_conn_url=`curl --silent -L -A "$user_agent" $pathtotestfile|grep 'action='|sed 's/\(.*action="\)\(.*\)">/\2/g'`
+    asianet_conn_url=`curl --silent --insecure -L -A "$user_agent" $pathtotestfile|grep 'action='|sed 's/\(.*action="\)\(.*\)">/\2/g'`
     # Save the URL so that we can use the same URL to log out
     log $asianet_conn_url | tee $lock_file
   else
@@ -133,7 +133,7 @@ connect() {
   asianet_conn_url=$(get_asianet_conn_url)
   log "Connecting to $asianet_conn_url"
   # Post data
-  curl --silent -F "auth_user=$username" -F "auth_pass=$password" -F "accept=Login" -A "$user_agent" $asianet_conn_url >> $debug_log
+  curl --silent --insecure -F "auth_user=$username" -F "auth_pass=$password" -F "accept=Login" -A "$user_agent" $asianet_conn_url >> $debug_log
 }
 
 #
@@ -144,7 +144,7 @@ disconnect() {
   asianet_conn_url=$(get_asianet_conn_url)
   log "Disconnecting from $asianet_conn_url"
   # Post data
-  curl --silent -F "logout_id=$username" -F "logout=Logout" -A "$user_agent" $asianet_conn_url >> $debug_log
+  curl --silent --insecure -F "logout_id=$username" -F "logout=Logout" -A "$user_agent" $asianet_conn_url >> $debug_log
   rm $lock_file 2>/dev/null
 }
 
@@ -156,7 +156,7 @@ keep_alive() {
   asianet_conn_url=$(get_asianet_conn_url)
   log "Pinging $asianet_conn_url"
   # Post data
-  curl --silent -F "alive=y" -F "un=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
+  curl --silent --insecure -F "alive=y" -F "un=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
 }
 
 #
