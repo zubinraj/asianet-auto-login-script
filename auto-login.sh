@@ -119,8 +119,8 @@ get_asianet_conn_url() {
     then
       cat $lock_file
     else
-      log_to_file "Using fallback URL: https://mwcp-ekm-04.adlkerala.com:8001/"   
-      echo https://mwcp-ekm-04.adlkerala.com:8001/
+      log_to_file "Using fallback URL: https://mwcp-spg-02.adlkerala.com:8001/"   
+      echo https://mwcp-spg-02.adlkerala.com:8001/
     fi
   fi
 }
