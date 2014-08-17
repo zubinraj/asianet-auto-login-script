@@ -156,7 +156,7 @@ keep_alive() {
   asianet_conn_url=$(get_asianet_conn_url)
   log "Pinging $asianet_conn_url"
   # Post data
-  curl --silent --insecure -F "alive=y" -F "un=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
+  curl --silent --insecure -F "alive=y" -F "auth_user=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
 }
 
 #
