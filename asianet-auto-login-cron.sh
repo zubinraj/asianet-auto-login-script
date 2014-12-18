@@ -36,8 +36,6 @@ password='<password>'
 
 user_agent="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0"
 log_folder=~/logfiles
-# Default connection time out interval - connection timeout from asianet is 5 minutes, ping slightly before
-#ping_interval=290
 
 # Initialize file paths
 
@@ -94,7 +92,7 @@ log() {
 #
 is_connected() {
   #if true we should get the content of the file as return value
-  curl --connect-timeout 30 --silent --insecure -A "$user_agent" $pathtotestfile | grep google.co.in > /dev/null
+  curl --connect-timeout 30 --silent -A "$user_agent" $pathtotestfile | grep google.co.in > /dev/null
   test=`echo $?`
   if [ $test = 0 ];
   then
@@ -114,7 +112,7 @@ get_asianet_conn_url() {
   then
     # The curl strategy will work only if user is not already connected to the net
 	log "Extracting login url by issuing a http request."
-    asianet_conn_url=`curl --silent --insecure -L -A "$user_agent" $pathtotestfile|grep 'action='|sed 's/\(.*action="\)\(.*\)">/\2/g'`
+    asianet_conn_url=`curl --silent -L -A "$user_agent" $pathtotestfile|grep 'action='|sed 's/\(.*action="\)\(.*\)">/\2/g'`
     # Save the URL so that we can use the same URL to log out
     log $asianet_conn_url | tee $lock_file
   else
@@ -138,7 +136,7 @@ connect() {
   get_asianet_conn_url
   #log "Connecting to $asianet_conn_url"
   # Post data
-  curl --silent --insecure -F "auth_user=$username" -F "auth_pass=$password" -F "accept=Login" -A "$user_agent" $asianet_conn_url >> $debug_log
+  curl --silent -F "auth_user=$username" -F "auth_pass=$password" -F "accept=Login" -A "$user_agent" $asianet_conn_url >> $debug_log
 }
 
 #
@@ -149,7 +147,7 @@ keep_alive() {
   get_asianet_conn_url
   log "Pinging $asianet_conn_url"
   # Post data
-  curl --silent --insecure -F "alive=y" -F "auth_user=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
+  curl --silent -F "alive=y" -F "auth_user=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
 }
 
 #
