@@ -14,6 +14,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # ----------------------------------------------------------------------
+# Modified by: Zubin Raj
+# 18-Dec-2014 : Removed the loop so this can be run from a cron on Raspberry Pi
+# ----------------------------------------------------------------------
 # Debug settings
 #
 # set to 1|0, 0 will not record curl outputs
@@ -28,19 +31,19 @@ pathtotestfile="http://www.google.co.in"
 # A bit unsecure because you have to store passwords here.
 # If you can see the script then probably you should be able to see 
 # the password as well 
-username=<username>
-password=<password>
+username='<username>'
+password='<password>'
 
-user_agent="Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5"
-program_folder=~/logfiles
+user_agent="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0"
+log_folder=~/logfiles
 # Default connection time out interval - connection timeout from asianet is 5 minutes, ping slightly before
-ping_interval=290
+#ping_interval=290
 
 # Initialize file paths
 
-lock_file=$program_folder/conn_url
-log_file=$program_folder/conn.log
-debug_log_file=$program_folder/debug.log
+lock_file=$log_folder/conn_url
+log_file=$log_folder/conn.log
+debug_log_file=$log_folder/conn.debug.log
 
 # This program requires curl. Test for that
 which curl > /dev/null
@@ -61,11 +64,11 @@ fi
 
 # Create log file folder if not exist
 
-if [ ! -d $program_folder ]; 
+if [ ! -d $log_folder ]; 
 then
-  mkdir $program_folder
+  mkdir $log_folder
 fi
-if [ ! -d $program_folder ]; 
+if [ ! -d $log_folder ]; 
 then
   echo "Could not create program folder"
   exit
@@ -110,17 +113,19 @@ get_asianet_conn_url() {
   if ! is_connected;
   then
     # The curl strategy will work only if user is not already connected to the net
+	log "Extracting login url by issuing a http request."
     asianet_conn_url=`curl --silent --insecure -L -A "$user_agent" $pathtotestfile|grep 'action='|sed 's/\(.*action="\)\(.*\)">/\2/g'`
     # Save the URL so that we can use the same URL to log out
     log $asianet_conn_url | tee $lock_file
   else
     # Use the saved URL from the file
+	log "Using saved URL from the file."
     if [ -f $lock_file ];
     then
-      cat $lock_file
+      asianet_conn_url=`cat $lock_file`
     else
-      log_to_file "Using fallback URL: https://mwcp-spg-02.adlkerala.com:8001/"   
-      echo https://mwcp-spg-02.adlkerala.com:8001/
+      log "Using fallback URL: https://mwcp-spg-02.adlkerala.com:8003/index.php"   
+      asianet_conn_url='https://mwcp-spg-02.adlkerala.com:8003/index.php'
     fi
   fi
 }
@@ -130,22 +135,10 @@ get_asianet_conn_url() {
 #
 connect() {
   # Get URL to post data to
-  asianet_conn_url=$(get_asianet_conn_url)
-  log "Connecting to $asianet_conn_url"
+  get_asianet_conn_url
+  #log "Connecting to $asianet_conn_url"
   # Post data
   curl --silent --insecure -F "auth_user=$username" -F "auth_pass=$password" -F "accept=Login" -A "$user_agent" $asianet_conn_url >> $debug_log
-}
-
-#
-# Connect to asianet by posting the username and logout command
-#
-disconnect() {
-  # Get URL to post data to
-  asianet_conn_url=$(get_asianet_conn_url)
-  log "Disconnecting from $asianet_conn_url"
-  # Post data
-  curl --silent --insecure -F "logout_id=$username" -F "logout=Logout" -A "$user_agent" $asianet_conn_url >> $debug_log
-  rm $lock_file 2>/dev/null
 }
 
 #
@@ -153,7 +146,7 @@ disconnect() {
 #
 keep_alive() {
   # Get URL to post data to
-  asianet_conn_url=$(get_asianet_conn_url)
+  get_asianet_conn_url
   log "Pinging $asianet_conn_url"
   # Post data
   curl --silent --insecure -F "alive=y" -F "auth_user=$username" -A "$user_agent" $asianet_conn_url >> $debug_log
@@ -162,27 +155,25 @@ keep_alive() {
 #
 #-END-FUNCTIONS---------------------------------------------------------
 
-log "System started."
+log "Starting.."
 
 # If disconnect, try connecting. If connected, keep alive.
-while [ 1 ];
-do
-	if is_connected;
-	then
-	  # If connected then proceed
-	  keep_alive
-	else
-	  connect
-	  if ! is_connected;
-	  then
-		log "Could not connect."
-	  else
-		log "Successfully re-connected."
-	  fi  
-	fi
-  # Sleep ping_interval and ping again
-  sleep $ping_interval
-done
-;;
-esac
+if is_connected;
+then
+  # If connected then proceed
+  log "Already connected."
+  keep_alive
+else
+  log "Not connected, attempting to connect.."
+  connect
+  if is_connected;
+  then
+	log "Successfully re-connected."
+  else
+	log "Could not connect."
+  fi
+fi
+
+
+
 
